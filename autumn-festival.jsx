@@ -180,6 +180,23 @@ const optimizeRoute = ids => {
   return result;
 };
 
+// Example route for the planner preview on Home
+const EXAMPLE_ROUTE = (() => {
+  const ids = [9, 46, 33, 31];
+  const vs = ids.map(id => VENUES.find(v => v.id === id));
+  let mins = 600;
+  return vs.map((v, i) => {
+    const h = String(Math.floor(mins / 60)).padStart(2, "0");
+    const m = String(mins % 60).padStart(2, "0");
+    const d = dur(v);
+    const drive = i < vs.length - 1 ? driveMin(v, vs[i + 1]) : 0;
+    mins += d + drive;
+    return { ...v, time: `${h}:${m}`, dur: d, drive };
+  });
+})();
+const EXAMPLE_TOTAL = EXAMPLE_ROUTE.reduce((a, s) => a + s.dur + s.drive, 0);
+const EXAMPLE_VILLAGES = [...new Set(EXAMPLE_ROUTE.map(v => v.village))];
+
 // ─────────────────────────────────────────────────────────
 // CSS
 // ─────────────────────────────────────────────────────────
@@ -232,6 +249,10 @@ html,body{background:var(--bg);color:var(--cream);font-family:var(--ff);min-heig
 .hb-pie{background:rgba(200,90,21,.2);border-color:rgba(200,90,21,.5);color:var(--accent2)}
 .hb-tipple{background:rgba(139,26,47,.2);border-color:rgba(139,26,47,.5);color:#D06080}
 .hb-garden{background:rgba(58,107,47,.2);border-color:rgba(58,107,47,.5);color:#7AC470}
+.btn-hero{padding:12px 28px;border-radius:100px;font-size:13px;font-weight:600;letter-spacing:.04em;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:var(--ff);transition:background .2s}
+.btn-hero:hover{background:var(--accent2)}
+.btn-hero-o{padding:12px 28px;border-radius:100px;font-size:13px;font-weight:600;letter-spacing:.04em;border:1px solid rgba(200,90,21,.5);cursor:pointer;background:transparent;color:var(--accent2);font-family:var(--ff);transition:all .2s}
+.btn-hero-o:hover{background:rgba(200,90,21,.12)}
 /* INPUTS */
 .inp-lbl{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
 .inp{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:var(--rd);padding:12px 14px;color:var(--cream);font-size:14px;font-family:var(--ff);outline:none;transition:border-color .2s}
@@ -597,8 +618,8 @@ function AppNav({ page, setPage, total, user, onAvatar }) {
   const tabs = [
     { id:"home",     lbl:"Festival",  pub:true  },
     { id:"venues",   lbl:"Venues",    pub:true  },
-    { id:"passport", lbl: total > 0 ? `Passport · ${total}` : "Passport", pub:false },
-    { id:"planner",  lbl:"Planner",   pub:false },
+    { id:"passport", lbl: total > 0 ? `Passport · ${total}` : "Passport", pub:true },
+    { id:"planner",  lbl:"Planner",   pub:true },
   ];
   const go = (id, pub) => { setPage(id, pub); setMenuOpen(false); };
   return (
@@ -664,11 +685,10 @@ function Home({ user, stamps, setPage, onPassport, submitted, onSubmit }) {
           <div className="hero-eye">Macedon Ranges · April 1–30, 2026</div>
           <div style={{ fontSize:10, letterSpacing:".22em", textTransform:"uppercase", color:"var(--accent2)", marginBottom:8, fontWeight:500 }}>Australia's Biggest</div>
           <h1 className="hero-h">Pie &amp; Tart<em>Trail</em></h1>
-          <p className="hero-p">A month-long celebration across nine villages. Collect your digital Food & Drink Passport and enter the Ultimate Prize Draw.</p>
-          <div className="hero-badges">
-            <div className="hbadge hb-pie">Pie & Tart Trail</div>
-            <div className="hbadge hb-tipple">Tipple Trail</div>
-            <div className="hbadge hb-garden">Garden Trail</div>
+          <p className="hero-p">Plan your perfect day across 91 venues and nine villages. Build a personalised itinerary with drive times, maps, and a digital passport — no sign-up required.</p>
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center", marginTop:6 }}>
+            <button onClick={() => setPage("planner")} className="btn-hero">Plan Your Trip</button>
+            <button onClick={() => setPage("venues")} className="btn-hero-o">Browse Venues</button>
           </div>
         </div>
       </div>
@@ -685,6 +705,43 @@ function Home({ user, stamps, setPage, onPassport, submitted, onSubmit }) {
               {i < a.length-1 && <div className="lp-stat-div" />}
             </React.Fragment>
           ))}
+        </div>
+      </div>
+
+      {/* PLANNER PREVIEW */}
+      <div className="shell" style={{ paddingTop:28, paddingBottom:0 }}>
+        <div style={{ background:"linear-gradient(145deg,rgba(200,90,21,.12) 0%,rgba(30,18,10,.4) 100%)", border:"1px solid rgba(200,90,21,.25)", borderRadius:22, padding:"20px 18px 18px", marginBottom:0 }}>
+          <div style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", color:"var(--accent2)", marginBottom:6 }}>Example Itinerary</div>
+          <div style={{ fontFamily:"var(--fs)", fontSize:19, fontWeight:700, color:"var(--cream2)", lineHeight:1.15, marginBottom:4 }}>A Perfect Day on the Trail</div>
+          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16 }}>{EXAMPLE_ROUTE.length} stops · {EXAMPLE_VILLAGES.join(" → ")} · {Math.floor(EXAMPLE_TOTAL/60)}h {EXAMPLE_TOTAL%60}m</div>
+
+          <div style={{ display:"flex", flexDirection:"column", gap:0, marginBottom:16 }}>
+            {EXAMPLE_ROUTE.map((stop, i) => (
+              <div key={stop.id}>
+                <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
+                  <div style={{ minWidth:44, textAlign:"right" }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:"var(--gold2)", fontVariantNumeric:"tabular-nums" }}>{stop.time}</div>
+                  </div>
+                  <div style={{ width:2, background:"rgba(200,90,21,.3)", position:"relative", minHeight:48 }}>
+                    <div style={{ position:"absolute", top:5, left:-4, width:10, height:10, borderRadius:"50%", background:stop.trail==="pie"?"var(--accent)":stop.trail==="tipple"?"var(--accent2)":"#6A994E", border:"2px solid var(--bg)" }} />
+                  </div>
+                  <div style={{ flex:1, paddingBottom: i < EXAMPLE_ROUTE.length - 1 ? 14 : 4 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:"var(--cream2)" }}>{stop.name}</div>
+                    <div style={{ fontSize:11, color:"var(--muted)" }}>{stop.village} · {stop.dur} min</div>
+                  </div>
+                </div>
+                {stop.drive > 0 && (
+                  <div style={{ display:"flex", gap:12, alignItems:"center", paddingBottom:10 }}>
+                    <div style={{ minWidth:44 }} />
+                    <div style={{ width:2, background:"rgba(200,90,21,.15)", minHeight:16 }} />
+                    <div style={{ fontSize:10, color:"rgba(200,150,80,.5)", fontStyle:"italic" }}>{stop.drive} min drive</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => setPage("planner")} className="btn-hero" style={{ width:"100%" }}>Build Your Own Itinerary</button>
         </div>
       </div>
 
@@ -1357,7 +1414,14 @@ export default function App() {
           setLoading(false);
         });
       } else {
-        setLoading(false);
+        Promise.all([
+          db.get("mraf_stamps:anon"),
+          db.get("mraf_itin:anon"),
+        ]).then(([s, it]) => {
+          if (s) setStamps(s);
+          if (it) setItin(it);
+          setLoading(false);
+        });
       }
     });
   }, []);
@@ -1417,17 +1481,20 @@ export default function App() {
     setFlash(v);
     setTimeout(() => setFlash(null), 700);
     setToast(`${TRAILS[v.trail].emoji} ${v.name} stamped!`);
-    if (user) await db.set(`mraf_stamps:${user.email}`, next);
+    const sKey = user ? `mraf_stamps:${user.email}` : "mraf_stamps:anon";
+    await db.set(sKey, next);
   };
 
   const rmStamp = async id => {
     const next = { ...stamps }; delete next[id];
     setStamps(next);
-    if (user) await db.set(`mraf_stamps:${user.email}`, next);
+    const rKey = user ? `mraf_stamps:${user.email}` : "mraf_stamps:anon";
+    await db.set(rKey, next);
   };
 
   const saveItin = async it => {
-    if (user) await db.set(`mraf_itin:${user.email}`, it);
+    const key = user ? `mraf_itin:${user.email}` : "mraf_itin:anon";
+    await db.set(key, it);
   };
 
   const handleSubmit = async data => {
@@ -1464,9 +1531,9 @@ export default function App() {
           user={user}
           onAvatar={user ? () => setUserMenu(true) : () => setLoginSheet(true)}
         />
-        {page==="home"     && <Home user={user} stamps={stamps} setPage={setPage} onPassport={() => user ? setPage("passport") : setLoginSheet(true)} submitted={submitted} onSubmit={() => user ? setSubmitModal(true) : setLoginSheet(true)} />}
+        {page==="home"     && <Home user={user} stamps={stamps} setPage={setPage} onPassport={() => setPage("passport")} submitted={submitted} onSubmit={() => user ? setSubmitModal(true) : setLoginSheet(true)} />}
         {page==="passport" && <Passport stamps={stamps} setModal={setModal} submitted={submitted} onSubmit={() => setSubmitModal(true)} />}
-        {page==="venues"   && <Venues stamps={stamps} setModal={v => user ? setModal(v) : setLoginSheet(true)} />}
+        {page==="venues"   && <Venues stamps={stamps} setModal={setModal} />}
         {page==="planner"  && <Planner stamps={stamps} itin={itin} setItin={setItin} saveItin={saveItin} />}
       </div>
 
