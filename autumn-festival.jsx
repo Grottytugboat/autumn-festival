@@ -409,6 +409,24 @@ textarea.note:focus{border-color:var(--border2)}
 @media(min-width:1200px){
   .suggest-grid{grid-template-columns:1fr 1fr 1fr}
 }
+/* MOBILE NAV */
+.nav-burger{display:none;background:none;border:none;color:var(--cream);font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1}
+.nav-tabs{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
+.mobile-overlay{position:fixed;inset:0;top:54px;z-index:87;background:rgba(0,0,0,.4)}
+.mobile-menu{position:fixed;top:54px;left:0;right:0;z-index:88;background:rgba(19,10,4,.97);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;flex-direction:column;gap:2px}
+.mobile-menu .nav-tab{width:100%;text-align:left;padding:14px 16px;font-size:15px;border-radius:var(--rd)}
+@media(max-width:639px){
+  .nav-burger{display:flex;align-items:center;justify-content:center}
+  .nav-tabs{display:none}
+  .hero-h{font-size:clamp(40px,12vw,60px)}
+  .hero{min-height:min(70vh,500px);padding:32px 16px 28px}
+  .lp-stat-n{font-size:18px}
+  .lp-stat-l{font-size:8px;letter-spacing:.12em}
+  .sec-title{font-size:22px}
+  .event-grid{grid-template-columns:1fr}
+  .sgrid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .sc{border-radius:8px}
+}
 `;
 
 // ─────────────────────────────────────────────────────────
@@ -574,6 +592,7 @@ function SubmitModal({ user, stamps, onSubmit, onClose }) {
 // ─────────────────────────────────────────────────────────
 
 function AppNav({ page, setPage, total, user, onAvatar }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const init = user?.name?.trim()[0]?.toUpperCase();
   const tabs = [
     { id:"home",     lbl:"Festival",  pub:true  },
@@ -581,21 +600,39 @@ function AppNav({ page, setPage, total, user, onAvatar }) {
     { id:"passport", lbl: total > 0 ? `Passport · ${total}` : "Passport", pub:false },
     { id:"planner",  lbl:"Planner",   pub:false },
   ];
+  const go = (id, pub) => { setPage(id, pub); setMenuOpen(false); };
   return (
-    <nav className="nav">
-      <div className="nav-inner">
-        <div className="nav-brand">Autumn Festival</div>
-        {tabs.map(t => (
-          <button key={t.id} className={`nav-tab ${page===t.id?"on":""}`} onClick={() => setPage(t.id, t.pub)}>{t.lbl}</button>
-        ))}
-        <div className="nav-right">
-          {init
-            ? <div className="avatar" onClick={onAvatar} title={user.name}>{init}</div>
-            : <button className="nav-tab" onClick={onAvatar} style={{ color:"var(--gold2)", borderColor:"rgba(200,144,26,.3)", border:"1px solid", borderRadius:100, padding:"4px 10px" }}>Sign in</button>
-          }
+    <>
+      <nav className="nav" aria-label="Main navigation">
+        <div className="nav-inner">
+          <div className="nav-brand">Autumn Festival</div>
+          <button className="nav-burger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+            {menuOpen ? "\u2715" : "\u2630"}
+          </button>
+          <div className="nav-tabs">
+            {tabs.map(t => (
+              <button key={t.id} className={`nav-tab ${page===t.id?"on":""}`} onClick={() => go(t.id, t.pub)}>{t.lbl}</button>
+            ))}
+          </div>
+          <div className="nav-right">
+            {init
+              ? <div className="avatar" onClick={onAvatar} title={user.name}>{init}</div>
+              : <button className="nav-tab" onClick={onAvatar} style={{ color:"var(--gold2)", borderColor:"rgba(200,144,26,.3)", border:"1px solid", borderRadius:100, padding:"4px 10px" }}>Sign in</button>
+            }
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      {menuOpen && (
+        <>
+          <div className="mobile-overlay" onClick={() => setMenuOpen(false)} />
+          <div className="mobile-menu">
+            {tabs.map(t => (
+              <button key={t.id} className={`nav-tab ${page===t.id?"on":""}`} onClick={() => go(t.id, t.pub)}>{t.lbl}</button>
+            ))}
+          </div>
+        </>
+      )}
+    </>
   );
 }
 
